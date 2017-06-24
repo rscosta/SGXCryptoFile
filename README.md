@@ -17,7 +17,9 @@ Actually, the key is hardcoded inside the enclave.
 
 Build the SgxCryptoFile
 --------------------
-###Prerequisites:
+
+Prerequisites:
+
 - Ensure that you have the following required operating systems: 
   Ubuntu\* Desktop-14.04-LTS 64bits
 
@@ -28,35 +30,39 @@ Build the SgxCryptoFile
   $ sudo apt-get install nasm
 ```
 
-###Build the SgxCryptoFile
+Build the SgxCryptoFile
+
 The following steps describe how to build the SgxCryptoFile application.
 
 -  Build the project with the prepared Makefile: 
-    a. Hardware Mode, Debug build:
+
+
+-  Hardware Mode, Debug build:
 ```
   $ make SGX_MODE=HW SGX_DEBUG=1
 ```
-    b. Hardware Mode, Pre-release build:
+
+-  Hardware Mode, Pre-release build:
 ```
   $ make SGX_MODE=HW SGX_PRERELEASE=1
 ```
 
-    c. Hardware Mode, Release build:
+-  Hardware Mode, Release build:
 ```
   $ make SGX_MODE=HW
 ```
 
-    d. Simulation Mode, Debug build:
+-  Simulation Mode, Debug build:
 ```
   $ make SGX_DEBUG=1
 ```
 
-    e. Simulation Mode, Pre-release build:
+-  Simulation Mode, Pre-release build:
 ```
    $ make SGX_PRERELEASE=1
 ```
 
-    f. Simulation Mode, Release build:
+-  Simulation Mode, Release build:
 ```
    $ make
 ``` 
@@ -68,7 +74,9 @@ The following steps describe how to build the SgxCryptoFile application.
 
 Run the SgxCryptoFile
 --------------------
-###Encrypt File
+
+Encrypt File
+
 To encrypt a file, enter the following command:
 ```
 $ ./sgxCryptoFile -e -i [INPUT_FILE] -o -i [OUTPUT_FILE]
