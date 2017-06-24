@@ -79,10 +79,12 @@ Encrypt File
 
 To encrypt a file, enter the following command:
 ```
-$ ./sgxCryptoFile -e -i [INPUT_FILE] -o -i [OUTPUT_FILE]
+$ ./sgxCryptoFile -e -i [INPUT_FILE] -o [OUTPUT_FILE]
 ```
+
+Encrypt File
 
 To decrypt a file, enter the following command:
 ```
-$ ./sgxCryptoFile -d -i [INPUT_FILE] -o -i [OUTPUT_FILE]
+$ ./sgxCryptoFile -d -i [INPUT_FILE] -o [OUTPUT_FILE]
 ```
