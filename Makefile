@@ -40,8 +40,10 @@ else
 	Urts_Library_Name := sgx_urts
 endif
 
+NASM := nasm
+
 App_Cpp_Files := CryptoFileApp/CryptoFileApp.cpp
-App_Include_Paths := -IInclude -IApp -I$(SGX_SDK)/include
+App_Include_Paths := -IInclude -IApp -I$(SGX_SDK)/include -ICryptoFileApp/Benchmark
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
@@ -143,7 +145,15 @@ CryptoFileApp/%.o: CryptoFileApp/%.cpp
 	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
-$(App_Name): CryptoFileApp/CryptoEnclave_u.o $(App_Cpp_Objects)
+CryptoFileApp/Benchmark/cpuidc64.o: CryptoFileApp/Benchmark/cpuidc64.c
+	@$(CC) -m64 $(App_C_Flags) -c $< -o $@
+	@echo "CC   <=  $<"
+
+CryptoFileApp/Benchmark/cpuida64.o: CryptoFileApp/Benchmark/cpuida64.asm
+	@$(NASM) -f elf64 $<
+	@echo "NASM  <=  $<"
+
+$(App_Name): CryptoFileApp/Benchmark/cpuidc64.o CryptoFileApp/Benchmark/cpuida64.o CryptoFileApp/CryptoEnclave_u.o $(App_Cpp_Objects)
 	@$(CXX) $^ -o $@ $(App_Link_Flags)
 	@echo "LINK =>  $@"
 
@@ -173,4 +183,4 @@ $(Signed_CryptoEnclave_Name): $(CryptoEnclave_Name)
 .PHONY: clean
 
 clean:
-	@rm -f $(App_Name) $(CryptoEnclave_Name) $(Signed_CryptoEnclave_Name) $(App_Cpp_Objects) CryptoFileApp/CryptoEnclave_u.* $(CryptoEnclave_Cpp_Objects) CryptoEnclave/CryptoEnclave_t.*
+	@rm -f $(App_Name) $(CryptoEnclave_Name) $(Signed_CryptoEnclave_Name) $(App_Cpp_Objects) CryptoFileApp/Benchmark/*.o CryptoFileApp/CryptoEnclave_u.* $(CryptoEnclave_Cpp_Objects) CryptoEnclave/CryptoEnclave_t.*

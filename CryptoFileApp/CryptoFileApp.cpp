@@ -6,6 +6,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "cpuidh.h" //benchmark
 
 #define SGX_AESGCM_MAC_SIZE 16
 #define SGX_AESGCM_IV_SIZE 12
@@ -39,7 +40,12 @@ int encryptFile(sgx_enclave_id_t eid, const char* input, const char* output)
     size_t encMessageLen = (SGX_AESGCM_MAC_SIZE + SGX_AESGCM_IV_SIZE + fsize); 
     unsigned char *encMessage = (unsigned char *) malloc((encMessageLen+1)*sizeof(unsigned char));
 
+    start_time();
+
     sgxEncryptFile(eid, message, fsize, encMessage, encMessageLen);
+
+    end_time();
+
     encMessage[encMessageLen] = '\0';
 
     fwrite(encMessage, encMessageLen, 1, ofp);
@@ -51,6 +57,7 @@ int encryptFile(sgx_enclave_id_t eid, const char* input, const char* output)
     fclose(ofp);
 
     printf("[APP ENCRYPT] Encryption file (%s) created!\n",output);
+    printf("[APP ENCRYPT] Final encryption time: %6.6f seconds.\n", secs);
 }
 
 int decryptFile(sgx_enclave_id_t eid, const char* input, const char* output)
@@ -79,8 +86,13 @@ int decryptFile(sgx_enclave_id_t eid, const char* input, const char* output)
     size_t readRes = fread(message, fsize, 1, ifp);
     size_t decMessageLen = fsize - (SGX_AESGCM_MAC_SIZE + SGX_AESGCM_IV_SIZE);
     unsigned char *decMessage = (unsigned char *) malloc((decMessageLen+1)*sizeof(unsigned char));
-	
+
+    start_time();
+
     sgxDecryptFile(eid,message,fsize,decMessage,decMessageLen);
+
+    end_time();
+
     decMessage[decMessageLen] = '\0';
 
     fwrite(decMessage, decMessageLen, 1, ofp);
@@ -92,6 +104,7 @@ int decryptFile(sgx_enclave_id_t eid, const char* input, const char* output)
     fclose(ofp);
 
     printf("[APP DECRYPT] Decryption file (%s) created!\n",output);
+    printf("[APP DECRYPT] Final decryption time: %6.6f seconds.\n", secs);
 }
 
 void printDebug(const char *buf)
