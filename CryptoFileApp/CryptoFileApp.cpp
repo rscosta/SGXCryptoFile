@@ -12,8 +12,10 @@
 #define SGX_AESGCM_MAC_SIZE 16
 #define SGX_AESGCM_IV_SIZE 12
 
-#define VERSION   "1.1.170624"
+#define VERSION   "1.2.170624"
 #define AUTHOR   "Ricardo Costa"
+
+#define MAX_FILE_NAME_SIZE  512
 
 #define ENCLAVE_FILE "CryptoEnclave.signed.so"
 
@@ -125,20 +127,20 @@ void printAppUsage()
     printf(" -d\tdecryption mode enabled\n");
     printf(" -e\tencryption mode enabled\n");
     printf(" -i\tinput file\n");
-    printf("Example (Encryption): sgxCryptoFile -e -i file.txt (Output: [FILE].enc)\n");
-    printf("Example (Decryption): sgxCryptoFile -d -i file.txt (Output: [FILE].dec)\n\n");
+    printf(" -o\toutput file\n");
+    printf("Example (Encryption): sgxCryptoFile -e -i [INPUT_FILE] -o [OUTPUT_FILE]\n");
+    printf("Example (Decryption): sgxCryptoFile -d -i [INPUT_FILE] -o [OUTPUT_FILE]\n\n");
 }
 
 int main(int argc, char *argv[])
 {
     int option = 0;
     int mode = 0;
-    char fileName[256];
-    char encFileName[256];
-    char decFileName[256];
+    char inFileName[MAX_FILE_NAME_SIZE];
+    char outFileName[MAX_FILE_NAME_SIZE];
     
     // Specifying the expected options 
-    while ((option = getopt(argc, argv,"edi:")) != -1) {
+    while ((option = getopt(argc, argv,"edi:o:")) != -1) {
         switch (option) {
 	     case 'e' : 
 	                mode = 1; /*Encryption enabled */
@@ -150,9 +152,15 @@ int main(int argc, char *argv[])
 			if(optarg == NULL)
 			  exit(EXIT_FAILURE);
 			  
-			  strncpy(fileName, optarg, 256); // filename to encrypted/decrypted 
+			  strncpy(inFileName, optarg, MAX_FILE_NAME_SIZE); 
                  break;
-             default: printAppUsage(); 
+             case 'o' : 
+			if(optarg == NULL)
+			  exit(EXIT_FAILURE);
+			  
+			  strncpy(outFileName, optarg, MAX_FILE_NAME_SIZE); 
+                 break;
+	     default: printAppUsage(); 
                  exit(EXIT_FAILURE);
         }
     }
@@ -164,18 +172,7 @@ int main(int argc, char *argv[])
 	exit(EXIT_FAILURE);
     }
       
-    if(mode ==1)
-    {
-	strcpy(encFileName, fileName);
-	strcat(encFileName, ".enc");
-    }
-    else
-    {
-	strcpy(decFileName, fileName);
-	strcat(decFileName, ".dec");
-    }
-
-    // Setup enclave 
+     // Setup enclave 
     sgx_enclave_id_t eid;
     sgx_status_t ret;
     sgx_launch_token_t token = { 0 };
@@ -193,12 +190,12 @@ int main(int argc, char *argv[])
     if(mode ==1)
     {
 	//Encrypt a file
-	encryptFile(eid, fileName, encFileName);
+	encryptFile(eid, inFileName, outFileName);
     }
     else
     {
       	//Decrypt a file
-	decryptFile(eid, encFileName, decFileName);
+	decryptFile(eid, inFileName, outFileName);
     }
     
     //Destroy Enclave
