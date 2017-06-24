@@ -3,6 +3,7 @@
 #include "sgx_urts.h"
 #include "CryptoEnclave_u.h"
 
+#include "getopt.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
@@ -10,6 +11,9 @@
 
 #define SGX_AESGCM_MAC_SIZE 16
 #define SGX_AESGCM_IV_SIZE 12
+
+#define VERSION   "1.1.170624"
+#define AUTHOR   "Ricardo Costa"
 
 #define ENCLAVE_FILE "CryptoEnclave.signed.so"
 
@@ -113,51 +117,93 @@ void printDebug(const char *buf)
     printf("ENCLAVE: %s\n", buf);
 }
 
+void printAppUsage()
+{
+    printf("\nSgxCryptoFile - App for Encrypting and Decrypting Files using Intel SGX. Version:%s Author:%s\n", VERSION, AUTHOR);  
+    printf("Usage: sgxCryptoFile [OPTIONS] [FILE]\n\n");
+    printf("Options:\n");
+    printf(" -d\tdecryption mode enabled\n");
+    printf(" -e\tencryption mode enabled\n");
+    printf(" -i\tinput file\n");
+    printf("Example (Encryption): sgxCryptoFile -e -i file.txt (Output: [FILE].enc)\n");
+    printf("Example (Decryption): sgxCryptoFile -d -i file.txt (Output: [FILE].dec)\n\n");
+}
+
 int main(int argc, char *argv[])
 {
-	if((argv[1] == NULL) && (argc != 2))
-	{
-	  printf("sgxCryptoFile - SGX App for Encrypting and Decrypting Files\n");
-	  printf("Usage: sgxCryptoFile [FILE]\n\n");
-	  printf("Output: [FILE].enc and [FILE].dec\n");
-	  return 0;
-	}  
-	
-	char fileName[256];
-	char encFileName[256];
-	char decFileName[256];
-
-	strcpy(fileName, argv[1]);
-
+    int option = 0;
+    int mode = 0;
+    char fileName[256];
+    char encFileName[256];
+    char decFileName[256];
+    
+    // Specifying the expected options 
+    while ((option = getopt(argc, argv,"edi:")) != -1) {
+        switch (option) {
+	     case 'e' : 
+	                mode = 1; /*Encryption enabled */
+                 break;
+             case 'd' : 
+	                mode = 2; /*Decryption enabled */
+                break;
+             case 'i' : 
+			if(optarg == NULL)
+			  exit(EXIT_FAILURE);
+			  
+			  strncpy(fileName, optarg, 256); // filename to encrypted/decrypted 
+                 break;
+             default: printAppUsage(); 
+                 exit(EXIT_FAILURE);
+        }
+    }
+    
+    //Check if it is invalid mode
+    if (mode == 0)
+    {
+	printAppUsage();
+	exit(EXIT_FAILURE);
+    }
+      
+    if(mode ==1)
+    {
 	strcpy(encFileName, fileName);
 	strcat(encFileName, ".enc");
-
+    }
+    else
+    {
 	strcpy(decFileName, fileName);
 	strcat(decFileName, ".dec");
-		
-	// Setup enclave 
-	sgx_enclave_id_t eid;
-	sgx_status_t ret;
-	sgx_launch_token_t token = { 0 };
-	int token_updated = 0;
-	
-	//Init enclave
-	ret = sgx_create_enclave(ENCLAVE_FILE, SGX_DEBUG_FLAG, &token, &token_updated, &eid, NULL);
-	if (ret != SGX_SUCCESS)
-	{
-		printf("sgx_create_enclave failed: %#x\n", ret);
-		return 1;
-	}
+    }
 
+    // Setup enclave 
+    sgx_enclave_id_t eid;
+    sgx_status_t ret;
+    sgx_launch_token_t token = { 0 };
+    int token_updated = 0;
+	
+    //Init enclave
+    ret = sgx_create_enclave(ENCLAVE_FILE, SGX_DEBUG_FLAG, &token, &token_updated, &eid, NULL);
+    
+    if (ret != SGX_SUCCESS)
+    {
+	printf("sgx_create_enclave failed: %#x\n", ret);
+	exit(EXIT_FAILURE);
+    }
+
+    if(mode ==1)
+    {
 	//Encrypt a file
 	encryptFile(eid, fileName, encFileName);
-
-	//Decrypt a file
+    }
+    else
+    {
+      	//Decrypt a file
 	decryptFile(eid, encFileName, decFileName);
+    }
+    
+    //Destroy Enclave
+    sgx_destroy_enclave(eid);
 	
-	//Destroy Enclave
-	sgx_destroy_enclave(eid);
-	
-	return 0;
+    return 0;
 }
 
